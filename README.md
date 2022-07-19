@@ -1,0 +1,1 @@
+Slider created with React
