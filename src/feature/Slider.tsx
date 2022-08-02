@@ -1,10 +1,22 @@
 import React, { useReducer } from 'react';
-import { ISettingsAction, ISliderData, ISliderSettings } from '../types/interfaces';
+import { ISettingsAction, ISliderData, ISliderSettings } from '../types/interfaces'; // FIXME перенеси все типы в этот файл, если они используются еще где-то то экспортируй их отсюда
 import SlideBox from '../components/SlideBox';
 import { SettingsActionEnum } from '../types/types';
 import SettingsInput from '../components/SettingsInput';
 import styled, { createGlobalStyle } from 'styled-components';
 
+/* FIXME обнови порядок импортов во всех файлах по следующей схеме:
+  global-imports
+
+  primitives
+
+  components - компоненты из папки components
+  ../components - не общие компоненты, которые используются в рамках модуля
+
+  types
+ */
+
+// FIXME все styled-компоненты идет после твоего компонента, в данном случае после Slider. Это нужно сделать во всех файлах
 const GlobalStyle = createGlobalStyle`
 body {
   margin: 0;
@@ -21,15 +33,19 @@ const StyledHeading = styled.h2`
   margin-bottom: 30px;
 `;
 
+// FIXME export компонента производится сразу после его объявления с отступом в одну строчку, с использованием React.memo. Это нужно сделать для всех компонентов
 export default function Slider({
-  slides,
+  slides, // FIXME выставить всем свойствам значения по-умолчанию, если они предусмотрены
   loop,
   navs,
-  pags,
+  pags, // FIXME pages
   auto,
   stopMouseHover,
   delay,
 }: ISliderData) {
+  /* FIXME вынести sliderSettingsReducer из компонента, т.к. он не использует переменные из окружения компонента.
+      сейчас эта функция будет создаваться при каждом рендере - что не есть хорошо
+   */
   function sliderSettingsReducer(state: ISliderSettings, action: ISettingsAction): ISliderSettings {
     switch (action.type) {
       case SettingsActionEnum.LOOP: {
@@ -57,7 +73,7 @@ export default function Slider({
         return { ...state };
     }
   }
-
+  // FIXME удалить
   const initialSettingsState: ISliderSettings = {
     loop,
     navs,
@@ -66,7 +82,9 @@ export default function Slider({
     stopMouseHover,
     delay,
   };
-
+  /* FIXME useReducer принимает 2 дженерика, первый отвечает за функцию редьюсера, а второй за объект state.
+      В твоем случае useReducer<ReducerType(Надо написать), ISliderSettings>
+   */
   const [sliderSettingsState, sliderSettingsDispatch] = useReducer(
     sliderSettingsReducer,
     initialSettingsState
@@ -76,6 +94,7 @@ export default function Slider({
     sliderSettingsDispatch({ type, payload: { isActive, delay } });
   }
 
+  // FIXME панель настроек слайдера, явно не должен находится в компоненте слайдера - первый принцип солида
   const settingsInputs = Object.keys(initialSettingsState).map((key) => (
     <SettingsInput
       actionType={key as SettingsActionEnum}
@@ -87,7 +106,9 @@ export default function Slider({
 
   return (
     <>
+      {/*FIXME как-то странно что глобальные стили определены в общем компоненте, а если я захочу использовать несколько слайдеров на странице? Вынести на уровень App*/}
       <GlobalStyle />
+      {/*FIXME нет необходимости в данном компоненте*/}
       <SlideBox
         slides={slides}
         loop={sliderSettingsState.loop}
@@ -97,6 +118,7 @@ export default function Slider({
         stopMouseHover={sliderSettingsState.stopMouseHover}
         delay={sliderSettingsState.delay}
       />
+      {/*FIXME писал выше, этого тут быть не должно*/}
       <StyledHeading>Tools</StyledHeading>
       <SettingsBox>{settingsInputs}</SettingsBox>
     </>

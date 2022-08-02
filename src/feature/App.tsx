@@ -1,6 +1,8 @@
-import Slider from './Slider';
+import Slider from './Slider'; // FIXME Slider - это компонент, перенести в components
 
+// FIXME export компонента производится сразу после его объявления с отступом в одну строчку, с использованием React.memo
 export function App() {
+  // FIXME вынеси slides в json-файл
   const slides = [
     {
       img: 'https://trikky.ru/wp-content/blogs.dir/1/files/2020/06/10/d9b97b5646fbb691e29947a921049a1d.jpg',
@@ -25,6 +27,7 @@ export function App() {
   ];
 
   return (
+    // FIXME prop={true} => prop
     <Slider
       slides={slides}
       loop={true}

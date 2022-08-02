@@ -14,7 +14,9 @@ const StyledPaginationButton = styled.button<{ currentSlide: number }>`
 export default function PaginationButton({
   onClick,
   value,
-  currentSlide,
+  currentSlide /* FIXME нарушение последнего правила солид. Кнопка не должна знать о currentSlide.
+                    Лучше определить свойство mode со значениями primary и secondary и в зависимости
+                    от того равно value currentSlide или нет выставлять необходимый  mode */,
   children,
 }: IPaginationButtonProps) {
   return (
