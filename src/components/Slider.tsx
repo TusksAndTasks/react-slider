@@ -1,124 +1,232 @@
-import React, { useReducer } from 'react';
-import { ISettingsAction, ISliderData, ISliderSettings } from '../types/interfaces'; // FIXME перенеси все типы в этот файл, если они используются еще где-то то экспортируй их отсюда
-import SlideBox from './SlideBox';
-import { SettingsActionEnum } from '../types/types';
-import SettingsInput from './SettingsInput';
-import styled, { createGlobalStyle } from 'styled-components';
+import React, { ReactNode, useEffect, useState } from 'react';
+import styled from 'styled-components';
+import { observer } from 'mobx-react-lite';
+import PaginationButton from './PaginationButton';
+import PageCounter from './PageCounter';
+import NavigationButton from './NavigationButton';
+import settingsStore from '../store/settingsStore';
 
-/* FIXME обнови порядок импортов во всех файлах по следующей схеме (если появятся новые виды импортов, уточни у меня их порядок):
-  global-imports
-
-  primitives
-
-  components - компоненты из папки components
-  ../components - не общие компоненты, которые используются в рамках модуля
-
-  utils
-
-  types
- */
-
-// FIXME все styled-компоненты идет после твоего компонента, в данном случае после Slider. Это нужно сделать во всех файлах
-const GlobalStyle = createGlobalStyle`
-body {
-  margin: 0;
+export interface ICheckBoxProps {
+  children?: React.ReactNode;
+  checked: boolean;
+  onChange: () => void;
 }
-`;
 
-const SettingsBox = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-const StyledHeading = styled.h2`
-  text-align: center;
-  margin-bottom: 30px;
-`;
+export interface ITextInputProps {
+  children?: React.ReactNode;
+  value: number;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+export interface ICounterProps {
+  currentPage: number;
+  pagesTotal: number;
+}
+
+export interface IPaginationButtonProps {
+  onClick: (e: React.MouseEvent) => void;
+  value: number;
+  currentSlide: number;
+  children: ReactNode;
+}
+
+export interface INavButtonProps {
+  value: string;
+  onClick: (direction: string) => void;
+}
+
+export enum SettingsEnum {
+  LOOP = 'loop',
+  NAVS = 'navs',
+  PAGES = 'pages',
+  AUTO = 'auto',
+  STOPMOUSEHOVER = 'stopMouseHover',
+}
+
+export interface ISlide {
+  img: string;
+  text: string;
+}
+
+export interface ISliderSettings {
+  loop: boolean;
+  navs: boolean;
+  pags: boolean;
+  auto: boolean;
+  stopMouseHover: boolean;
+  delay: number;
+}
+
+export interface ISliderData extends ISliderSettings {
+  slides: ISlide[];
+}
 
 // FIXME export компонента производится сразу после его объявления с отступом в одну строчку, с использованием React.memo. Это нужно сделать для всех компонентов
-export default function Slider({
-  slides, // FIXME выставить всем свойствам значения по-умолчанию, если они предусмотрены
-  loop,
-  navs,
-  pags, // FIXME pages
-  auto,
-  stopMouseHover,
-  delay,
-}: ISliderData) {
-  // FIXME сделать состояние настроек через mobx, на практике useReducer почти не используется
-  function sliderSettingsReducer(state: ISliderSettings, action: ISettingsAction): ISliderSettings {
-    switch (action.type) {
-      case SettingsActionEnum.LOOP: {
-        return { ...state, loop: action.payload.isActive };
+const Slider = observer(({ slides }: { slides: ISlide[] }) => {
+  const { loop, navs, pages, auto, stopMouseHover, delay } = settingsStore;
+
+  const [sliderSlides, setSliderSlides] = useState(
+    slides.slice(slides.length - 1).concat(slides.slice(0, 2)) // FIXME Что это за магия?
+  );
+  const [direction, setDirection] = useState('still'); // FIXME сделать значения Direction через enum
+  const [isSlideshowStopped, setIsSlideShowStopped] = useState(false);
+  const [firstSlideIndex, setFirstSlideIndex] = useState(slides.length - 1);
+
+  const slidesArr = sliderSlides.map((elem) => (
+    <Slide key={elem.img}>
+      <StyledCaption>{elem.text}</StyledCaption>
+      <StyledImage src={elem.img} alt="pic" />
+    </Slide>
+  ));
+
+  useEffect(() => {
+    // FIXME Всегда избегай вложенности, если это возможно
+    //  if (!auto || isSlideshowStopped) return;
+    if (auto) {
+      if (!isSlideshowStopped) {
+        const id = setInterval(() => handleTransitionAttempt('right'), delay * 1000);
+        // FIXME Нет необходимости именовать данную функцию, а лучше сделать через ее стрелочной
+        return function cleanup() {
+          clearInterval(id);
+        };
       }
-      case SettingsActionEnum.NAVS: {
-        return { ...state, navs: action.payload.isActive };
+    }
+  }, [isSlideshowStopped, auto, delay, direction, loop]);
+
+  function handleSlideChange(initialIndex: number, newIndex: number) {
+    const newSlides = sliderSlides.map(() => {
+      if (initialIndex >= slides.length) {
+        initialIndex = 0; // FIXME - аргументы функции изменять нельзя. НИКОГДА
+      } else if (initialIndex < 0) {
+        initialIndex = slides.length - 1;
       }
-      case SettingsActionEnum.PAGS: {
-        return { ...state, pags: action.payload.isActive };
-      }
-      case SettingsActionEnum.AUTO: {
-        return { ...state, auto: action.payload.isActive };
-      }
-      case SettingsActionEnum.STOPMOUSEHOVER: {
-        return { ...state, stopMouseHover: action.payload.isActive };
-      }
-      case SettingsActionEnum.DELAY: {
-        if ((action.payload.delay as number) < 1 || isNaN(action.payload.delay as number)) {
-          return { ...state, delay: 1 };
-        }
-        return { ...state, delay: action.payload.delay as number };
-      }
-      default:
-        return { ...state };
+      return slides[initialIndex++];
+    });
+    setFirstSlideIndex(newIndex);
+    setSliderSlides(newSlides);
+    setDirection('still');
+  }
+
+  function handleTransitionEnd() {
+    if (direction === 'left') {
+      const initialIndex = firstSlideIndex - 1;
+      const finalIndex = firstSlideIndex - 1 < 0 ? slides.length - 1 : firstSlideIndex - 1;
+      handleSlideChange(initialIndex, finalIndex);
+    } else {
+      const initialIndex = firstSlideIndex + 1;
+      const finalIndex = firstSlideIndex + 1 >= slides.length ? 0 : firstSlideIndex + 1;
+      handleSlideChange(initialIndex, finalIndex);
     }
   }
 
-  const initialSettingsState: ISliderSettings = {
-    loop,
-    navs,
-    pags,
-    auto,
-    stopMouseHover,
-    delay,
-  };
-
-  const [sliderSettingsState, sliderSettingsDispatch] = useReducer(
-    sliderSettingsReducer,
-    initialSettingsState
-  );
-
-  function changeSetting(type: SettingsActionEnum, isActive: boolean, delay?: number) {
-    sliderSettingsDispatch({ type, payload: { isActive, delay } });
-  }
-
-  // FIXME панель настроек слайдера, явно не должен находится в компоненте слайдера - первый принцип солида
-  const settingsInputs = Object.keys(initialSettingsState).map((key) => (
-    <SettingsInput
-      actionType={key as SettingsActionEnum}
-      settingState={sliderSettingsState}
-      settingDispatch={changeSetting}
-      key={key}
-    />
+  // FIXME нет необходимости выносить это в переменную, если не используется мемоизация.
+  const paginationButtons = slides.map((elem, index) => (
+    <PaginationButton
+      onClick={handlePagination}
+      value={index === 0 ? slides.length - 1 : index - 1}
+      key={elem.img}
+      currentSlide={firstSlideIndex}
+    >
+      {index + 1}
+    </PaginationButton>
   ));
 
+  function handlePagination(e: React.MouseEvent) {
+    const index = +(e.target as HTMLButtonElement).value;
+    handleSlideChange(index, index);
+  }
+
+  function handleTransitionAttempt(direction: string) {
+    if (!loop) {
+      if (direction === 'left' && firstSlideIndex === slides.length - 1) {
+        return;
+      } else if (direction === 'right' && firstSlideIndex === slides.length - 2) {
+        return;
+      }
+    }
+    setDirection(direction);
+  }
+
   return (
-    <>
-      {/*FIXME как-то странно что глобальные стили определены в общем компоненте, а если я захочу использовать несколько слайдеров на странице? Вынести на уровень App*/}
-      <GlobalStyle />
-      {/*FIXME нет необходимости в данном компоненте*/}
-      <SlideBox
-        slides={slides}
-        loop={sliderSettingsState.loop}
-        navs={sliderSettingsState.navs}
-        pags={sliderSettingsState.pags}
-        auto={sliderSettingsState.auto}
-        stopMouseHover={sliderSettingsState.stopMouseHover}
-        delay={sliderSettingsState.delay}
-      />
-      {/*FIXME писал выше, этого тут быть не должно*/}
-      <StyledHeading>Tools</StyledHeading>
-      <SettingsBox>{settingsInputs}</SettingsBox>
-    </>
+    <div>
+      <StyledView onTransitionEnd={handleTransitionEnd}>
+        <PageCounter currentPage={firstSlideIndex + 2} pagesTotal={slides.length}></PageCounter>
+        <SliderBox
+          direction={direction}
+          onMouseEnter={() => {
+            if (stopMouseHover) {
+              setIsSlideShowStopped(true);
+            }
+          }}
+          onMouseLeave={() => {
+            if (stopMouseHover) {
+              setIsSlideShowStopped(false);
+            }
+          }}
+        >
+          {slidesArr}
+        </SliderBox>
+        {navs && (
+          <>
+            <NavigationButton value="left" onClick={handleTransitionAttempt} />
+            <NavigationButton value="right" onClick={handleTransitionAttempt} />
+          </>
+        )}
+      </StyledView>
+      {pages && <StyledPagsContainer>{paginationButtons}</StyledPagsContainer>}
+    </div>
   );
-}
+});
+
+export default React.memo(Slider);
+
+const StyledImage = styled.img`
+  width: 100%;
+  height: 100%;
+`;
+
+const StyledCaption = styled.figcaption`
+  position: absolute;
+  width: 250px;
+  font-size: 40px;
+  font-family: 'Roboto Slab', serif;
+  text-shadow: 2px 2px 2px black;
+  bottom: 0;
+  left: calc((100% - 250px) / 2);
+  color: white;
+`;
+
+const StyledView = styled.div`
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+`;
+
+const StyledPagsContainer = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 5px 0;
+  background-color: #dcdcdc;
+`;
+
+const SliderBox = styled.div<{ direction: string }>`
+  display: flex;
+  overflow: hidden;
+  width: 300vw;
+  height: 92vh;
+  transform: ${(props) =>
+    props.direction === 'still'
+      ? 'translate(-33.33%)'
+      : props.direction === 'left'
+      ? 'translate(0%)'
+      : 'translate(-66.66%)'};
+  transition: ${(props) => (props.direction === 'still' ? '0' : '0.9s')};
+`;
+
+const Slide = styled.figure`
+  position: relative;
+  width: 100%;
+  margin: 0;
+`;

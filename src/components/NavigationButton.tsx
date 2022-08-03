@@ -1,4 +1,4 @@
-import { INavButtonProps } from '../types/interfaces';
+import { INavButtonProps } from './Slider';
 import styled from 'styled-components';
 import arrowBtn from '../assets/arrowButton.png';
 

@@ -1,4 +1,4 @@
-import { ICounterProps } from '../types/interfaces';
+import { ICounterProps } from './Slider';
 import styled from 'styled-components';
 
 // FIXME Использовать или для типографии на месте не очень правильный подход.

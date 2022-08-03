@@ -1,9 +1,23 @@
 import React from 'react';
-import Slider from './components/Slider';
+import { createGlobalStyle } from 'styled-components';
 import slides from './data/slides.json';
+import { Settings } from './components/Settings';
+import Slider from './components/Slider';
 
 function App() {
-  return <Slider slides={slides} loop navs pags auto stopMouseHover delay={3} />;
+  return (
+    <>
+      <GlobalStyle />
+      <Slider slides={slides} />
+      <Settings />
+    </>
+  );
 }
 
 export default React.memo(App);
+
+const GlobalStyle = createGlobalStyle`
+body {
+  margin: 0;
+}
+`;

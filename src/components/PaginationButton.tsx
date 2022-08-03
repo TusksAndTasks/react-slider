@@ -1,4 +1,4 @@
-import { IPaginationButtonProps } from '../types/interfaces';
+import { IPaginationButtonProps } from './Slider';
 import styled from 'styled-components';
 import React from 'react';
 
