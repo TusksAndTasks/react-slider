@@ -1,4 +1,4 @@
-import Slider from './Slider'; // FIXME Slider - это компонент, перенести в components
+import Slider from './feature/Slider'; // FIXME Slider - это компонент, перенести в components
 
 // FIXME export компонента производится сразу после его объявления с отступом в одну строчку, с использованием React.memo
 export function App() {
