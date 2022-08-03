@@ -137,7 +137,6 @@ export default function SlideBox({
   }
 
   function handleTransitionAttempt(direction: string) {
-    // FIXME if(loop) return setDirection(direction);
     if (!loop) {
       if (direction === 'left' && firstSlideIndex === slides.length - 1) {
         return;

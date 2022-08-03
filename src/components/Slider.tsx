@@ -1,8 +1,8 @@
 import React, { useReducer } from 'react';
 import { ISettingsAction, ISliderData, ISliderSettings } from '../types/interfaces'; // FIXME перенеси все типы в этот файл, если они используются еще где-то то экспортируй их отсюда
-import SlideBox from '../components/SlideBox';
+import SlideBox from './SlideBox';
 import { SettingsActionEnum } from '../types/types';
-import SettingsInput from '../components/SettingsInput';
+import SettingsInput from './SettingsInput';
 import styled, { createGlobalStyle } from 'styled-components';
 
 /* FIXME обнови порядок импортов во всех файлах по следующей схеме (если появятся новые виды импортов, уточни у меня их порядок):

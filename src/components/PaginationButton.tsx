@@ -1,12 +1,12 @@
 import { IPaginationButtonProps } from '../types/interfaces';
 import styled from 'styled-components';
+import React from 'react';
 
 const StyledPaginationButton = styled.button<{ currentSlide: number }>`
   ${(props) =>
     props.currentSlide == props.value
       ? 'color: white; background-color: black; border: 1px solid white;'
       : 'color: black; background-color: gray; border: 1px solid black;'}
-
   border-radius: 50%;
   padding: 3px 7px;
 `;
@@ -25,3 +25,17 @@ export default function PaginationButton({
     </StyledPaginationButton>
   );
 }
+
+// enum ButtonSize {
+//   SMAlL = 'SMALL',
+//   LARGE = 'LARGE',
+// }
+//
+// interface Button {
+//   children: React.ReactNode;
+//   size: ButtonSize;
+//   mode: "primary" | "secondary" | "transparent";
+// }
+//
+// <Button>1</Button>
+// <Button size={ButtonSize.LARGE} mode="transparent" ><img src="" alt=""/></Button>
