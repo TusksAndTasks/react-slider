@@ -5,13 +5,15 @@ import { SettingsActionEnum } from '../types/types';
 import SettingsInput from '../components/SettingsInput';
 import styled, { createGlobalStyle } from 'styled-components';
 
-/* FIXME обнови порядок импортов во всех файлах по следующей схеме:
+/* FIXME обнови порядок импортов во всех файлах по следующей схеме (если появятся новые виды импортов, уточни у меня их порядок):
   global-imports
 
   primitives
 
   components - компоненты из папки components
   ../components - не общие компоненты, которые используются в рамках модуля
+
+  utils
 
   types
  */
@@ -43,9 +45,7 @@ export default function Slider({
   stopMouseHover,
   delay,
 }: ISliderData) {
-  /* FIXME вынести sliderSettingsReducer из компонента, т.к. он не использует переменные из окружения компонента.
-      сейчас эта функция будет создаваться при каждом рендере - что не есть хорошо
-   */
+  // FIXME сделать состояние настроек через mobx, на практике useReducer почти не используется
   function sliderSettingsReducer(state: ISliderSettings, action: ISettingsAction): ISliderSettings {
     switch (action.type) {
       case SettingsActionEnum.LOOP: {
@@ -73,7 +73,7 @@ export default function Slider({
         return { ...state };
     }
   }
-  // FIXME удалить
+
   const initialSettingsState: ISliderSettings = {
     loop,
     navs,
@@ -82,9 +82,7 @@ export default function Slider({
     stopMouseHover,
     delay,
   };
-  /* FIXME useReducer принимает 2 дженерика, первый отвечает за функцию редьюсера, а второй за объект state.
-      В твоем случае useReducer<ReducerType(Надо написать), ISliderSettings>
-   */
+
   const [sliderSettingsState, sliderSettingsDispatch] = useReducer(
     sliderSettingsReducer,
     initialSettingsState

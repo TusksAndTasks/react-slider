@@ -18,6 +18,7 @@ export default function SettingsInput({
 }: ISettingInputProps) {
   if (typeof settingState[actionType] === 'boolean') {
     return (
+      //  FIXME сделать примитив Checkbox
       <StyledLabel>
         <input
           type="checkbox"
@@ -29,6 +30,7 @@ export default function SettingsInput({
     );
   } else {
     return (
+      //  FIXME сделать примитив Input
       <StyledLabel>
         <input
           type="text"

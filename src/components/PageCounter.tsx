@@ -1,6 +1,9 @@
 import { ICounterProps } from '../types/interfaces';
 import styled from 'styled-components';
 
+// FIXME Использовать или для типографии на месте не очень правильный подход.
+//  Создай примитив Typography со следующим интерфейсом, весь текст на проекте должен быть обернут в примитив Typography
+//  { children: string; type: "Heading" | "Paragraph" | "Label"; color: typeof colors(вынеси в переменную colors все цвета на проекте) }
 const StyledCounter = styled.p`
   position: absolute;
   top: 0;

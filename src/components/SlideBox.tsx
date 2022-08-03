@@ -66,9 +66,9 @@ export default function SlideBox({
   pags,
 }: ISliderData) {
   const [sliderSlides, setSliderSlides] = useState(
-    slides.slice(slides.length - 1).concat(slides.slice(0, 2))
+    slides.slice(slides.length - 1).concat(slides.slice(0, 2)) // FIXME Что это за магия?
   );
-  const [direction, setDirection] = useState('still');
+  const [direction, setDirection] = useState('still'); // FIXME сделать значения Direction через enum
   const [isSlideshowStopped, setIsSlideShowStopped] = useState(false);
   const [firstSlideIndex, setFirstSlideIndex] = useState(slides.length - 1);
 
@@ -80,9 +80,12 @@ export default function SlideBox({
   ));
 
   useEffect(() => {
+    // FIXME Всегда избегай вложенности, если это возможно
+    //  if (!auto || isSlideshowStopped) return;
     if (auto) {
       if (!isSlideshowStopped) {
         const id = setInterval(() => handleTransitionAttempt('right'), delay * 1000);
+        // FIXME Нет необходимости именовать данную функцию, а лучше сделать через ее стрелочной
         return function cleanup() {
           clearInterval(id);
         };
@@ -93,7 +96,7 @@ export default function SlideBox({
   function handleSlideChange(initialIndex: number, newIndex: number) {
     const newSlides = sliderSlides.map(() => {
       if (initialIndex >= slides.length) {
-        initialIndex = 0;
+        initialIndex = 0; // FIXME - аргументы функции изменять нельзя. НИКОГДА
       } else if (initialIndex < 0) {
         initialIndex = slides.length - 1;
       }
@@ -116,6 +119,7 @@ export default function SlideBox({
     }
   }
 
+  // FIXME нет необходимости выносить это в переменную, если не используется мемоизация.
   const paginationButtons = slides.map((elem, index) => (
     <PaginationButton
       onClick={handlePagination}
@@ -133,6 +137,7 @@ export default function SlideBox({
   }
 
   function handleTransitionAttempt(direction: string) {
+    // FIXME if(loop) return setDirection(direction);
     if (!loop) {
       if (direction === 'left' && firstSlideIndex === slides.length - 1) {
         return;
