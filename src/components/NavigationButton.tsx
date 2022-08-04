@@ -23,11 +23,6 @@ const StyledNavButton = styled.button`
 `;
 
 // FIXME NavigationButton и PaginationButton - это костыль. Объедини их в примитив Button, который будет лежать в папке primitives
-export default function NavigationButton({ value, onClick }: INavButtonProps) {
-  return (
-    <StyledNavButton
-      value={value}
-      onClick={(e) => onClick((e.target as HTMLButtonElement).value)}
-    ></StyledNavButton>
-  );
+export default function NavigationButton({ mode, onClick }: INavButtonProps) {
+  return <StyledNavButton value={mode} onClick={onClick}></StyledNavButton>;
 }

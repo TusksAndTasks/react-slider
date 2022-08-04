@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { observer } from 'mobx-react-lite';
 import PaginationButton from './PaginationButton';
@@ -31,8 +31,8 @@ export interface IPaginationButtonProps {
 }
 
 export interface INavButtonProps {
-  value: string;
-  onClick: (direction: string) => void;
+  mode: string;
+  onClick: () => void;
 }
 
 export enum SettingsEnum {
@@ -41,6 +41,12 @@ export enum SettingsEnum {
   PAGES = 'pages',
   AUTO = 'auto',
   STOPMOUSEHOVER = 'stopMouseHover',
+}
+
+export enum DirectionsEnum {
+  LEFT = 'left',
+  RIGHT = 'right',
+  STILL = 'still',
 }
 
 export interface ISlide {
@@ -61,53 +67,40 @@ export interface ISliderData extends ISliderSettings {
   slides: ISlide[];
 }
 
-// FIXME export компонента производится сразу после его объявления с отступом в одну строчку, с использованием React.memo. Это нужно сделать для всех компонентов
 const Slider = observer(({ slides }: { slides: ISlide[] }) => {
   const { loop, navs, pages, auto, stopMouseHover, delay } = settingsStore;
 
-  const [sliderSlides, setSliderSlides] = useState(
-    slides.slice(slides.length - 1).concat(slides.slice(0, 2)) // FIXME Что это за магия?
-  );
-  const [direction, setDirection] = useState('still'); // FIXME сделать значения Direction через enum
+  const initialVisibleSlides = slides.slice(slides.length - 1).concat(slides.slice(0, 2));
+  const [sliderSlides, setSliderSlides] = useState(initialVisibleSlides);
+  const [direction, setDirection] = useState(DirectionsEnum.STILL);
   const [isSlideshowStopped, setIsSlideShowStopped] = useState(false);
   const [firstSlideIndex, setFirstSlideIndex] = useState(slides.length - 1);
 
-  const slidesArr = sliderSlides.map((elem) => (
-    <Slide key={elem.img}>
-      <StyledCaption>{elem.text}</StyledCaption>
-      <StyledImage src={elem.img} alt="pic" />
-    </Slide>
-  ));
-
   useEffect(() => {
-    // FIXME Всегда избегай вложенности, если это возможно
-    //  if (!auto || isSlideshowStopped) return;
-    if (auto) {
-      if (!isSlideshowStopped) {
-        const id = setInterval(() => handleTransitionAttempt('right'), delay * 1000);
-        // FIXME Нет необходимости именовать данную функцию, а лучше сделать через ее стрелочной
-        return function cleanup() {
-          clearInterval(id);
-        };
-      }
-    }
+    if (!auto || isSlideshowStopped) return;
+    const id = setInterval(() => handleTransitionAttempt(DirectionsEnum.RIGHT), delay * 1000);
+    return () => clearInterval(id);
   }, [isSlideshowStopped, auto, delay, direction, loop]);
 
-  function handleSlideChange(initialIndex: number, newIndex: number) {
-    const newSlides = sliderSlides.map(() => {
-      if (initialIndex >= slides.length) {
-        initialIndex = 0; // FIXME - аргументы функции изменять нельзя. НИКОГДА
-      } else if (initialIndex < 0) {
-        initialIndex = slides.length - 1;
-      }
-      return slides[initialIndex++];
-    });
-    setFirstSlideIndex(newIndex);
-    setSliderSlides(newSlides);
-    setDirection('still');
-  }
+  const handleSlideChange = useCallback(
+    (initialIndex: number, newIndex: number) => {
+      let cropIndex = initialIndex;
+      const newSlides = sliderSlides.map(() => {
+        if (cropIndex >= slides.length) {
+          cropIndex = 0;
+        } else if (cropIndex < 0) {
+          cropIndex = slides.length - 1;
+        }
+        return slides[cropIndex++];
+      });
+      setFirstSlideIndex(newIndex);
+      setSliderSlides(newSlides);
+      setDirection(DirectionsEnum.STILL);
+    },
+    [sliderSlides, slides]
+  );
 
-  function handleTransitionEnd() {
+  const handleTransitionEnd = useCallback(() => {
     if (direction === 'left') {
       const initialIndex = firstSlideIndex - 1;
       const finalIndex = firstSlideIndex - 1 < 0 ? slides.length - 1 : firstSlideIndex - 1;
@@ -117,35 +110,55 @@ const Slider = observer(({ slides }: { slides: ISlide[] }) => {
       const finalIndex = firstSlideIndex + 1 >= slides.length ? 0 : firstSlideIndex + 1;
       handleSlideChange(initialIndex, finalIndex);
     }
-  }
+  }, [direction, firstSlideIndex, handleSlideChange, slides.length]);
 
-  // FIXME нет необходимости выносить это в переменную, если не используется мемоизация.
-  const paginationButtons = slides.map((elem, index) => (
-    <PaginationButton
-      onClick={handlePagination}
-      value={index === 0 ? slides.length - 1 : index - 1}
-      key={elem.img}
-      currentSlide={firstSlideIndex}
-    >
-      {index + 1}
-    </PaginationButton>
-  ));
+  const handlePagination = useCallback(
+    (e: React.MouseEvent) => {
+      const index = +(e.target as HTMLButtonElement).value;
+      handleSlideChange(index, index);
+    },
+    [handleSlideChange]
+  );
 
-  function handlePagination(e: React.MouseEvent) {
-    const index = +(e.target as HTMLButtonElement).value;
-    handleSlideChange(index, index);
-  }
-
-  function handleTransitionAttempt(direction: string) {
-    if (!loop) {
-      if (direction === 'left' && firstSlideIndex === slides.length - 1) {
-        return;
-      } else if (direction === 'right' && firstSlideIndex === slides.length - 2) {
-        return;
+  const handleTransitionAttempt = useCallback(
+    (direction: DirectionsEnum) => {
+      if (!loop) {
+        if (direction === 'left' && firstSlideIndex === slides.length - 1) {
+          return;
+        } else if (direction === 'right' && firstSlideIndex === slides.length - 2) {
+          return;
+        }
       }
-    }
-    setDirection(direction);
-  }
+      setDirection(direction);
+    },
+    [loop, firstSlideIndex, slides.length]
+  );
+
+  const slidesArr = useMemo(
+    () =>
+      sliderSlides.map((elem) => (
+        <Slide key={elem.img}>
+          <StyledCaption>{elem.text}</StyledCaption>
+          <StyledImage src={elem.img} alt="pic" />
+        </Slide>
+      )),
+    [sliderSlides]
+  );
+
+  const paginationButtons = useMemo(
+    () =>
+      slides.map((elem, index) => (
+        <PaginationButton
+          onClick={handlePagination}
+          value={index === 0 ? slides.length - 1 : index - 1}
+          key={elem.img}
+          currentSlide={firstSlideIndex}
+        >
+          {index + 1}
+        </PaginationButton>
+      )),
+    [slides, firstSlideIndex, handlePagination]
+  );
 
   return (
     <div>
@@ -168,8 +181,14 @@ const Slider = observer(({ slides }: { slides: ISlide[] }) => {
         </SliderBox>
         {navs && (
           <>
-            <NavigationButton value="left" onClick={handleTransitionAttempt} />
-            <NavigationButton value="right" onClick={handleTransitionAttempt} />
+            <NavigationButton
+              mode="left"
+              onClick={() => handleTransitionAttempt(DirectionsEnum.LEFT)}
+            />
+            <NavigationButton
+              mode="right"
+              onClick={() => handleTransitionAttempt(DirectionsEnum.RIGHT)}
+            />
           </>
         )}
       </StyledView>
