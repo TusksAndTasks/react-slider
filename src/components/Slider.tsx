@@ -1,46 +1,22 @@
-import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import styled from 'styled-components';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import PaginationButton from './PaginationButton';
+import { memoizeWith } from 'ramda';
+import styled from 'styled-components';
+
+import Typography from '../primitives/Typography';
+import Button from '../primitives/Button';
+import Icon from '../primitives/Icon';
 import PageCounter from './PageCounter';
-import NavigationButton from './NavigationButton';
 import settingsStore from '../store/settingsStore';
-
-export interface ICheckBoxProps {
-  children?: React.ReactNode;
-  checked: boolean;
-  onChange: () => void;
-}
-
-export interface ITextInputProps {
-  children?: React.ReactNode;
-  value: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
+import { colors } from '../Theme/colors';
+import arrowBtn from '../assets/arrowButton.png';
+import { TextModeEnum } from '../primitives/Typography';
+import { ButtonModeEnum, ButtonSizeEnum } from '../primitives/Button';
+import { IconEnum } from '../primitives/Icon';
 
 export interface ICounterProps {
   currentPage: number;
   pagesTotal: number;
-}
-
-export interface IPaginationButtonProps {
-  onClick: (e: React.MouseEvent) => void;
-  value: number;
-  currentSlide: number;
-  children: ReactNode;
-}
-
-export interface INavButtonProps {
-  mode: string;
-  onClick: () => void;
-}
-
-export enum SettingsEnum {
-  LOOP = 'loop',
-  NAVS = 'navs',
-  PAGES = 'pages',
-  AUTO = 'auto',
-  STOPMOUSEHOVER = 'stopMouseHover',
 }
 
 export enum DirectionsEnum {
@@ -54,36 +30,17 @@ export interface ISlide {
   text: string;
 }
 
-export interface ISliderSettings {
-  loop: boolean;
-  navs: boolean;
-  pags: boolean;
-  auto: boolean;
-  stopMouseHover: boolean;
-  delay: number;
-}
-
-export interface ISliderData extends ISliderSettings {
-  slides: ISlide[];
-}
-
-const Slider = observer(({ slides }: { slides: ISlide[] }) => {
+function Slider({ slides }: { slides: ISlide[] }) {
   const { loop, navs, pages, auto, stopMouseHover, delay } = settingsStore;
-
   const initialVisibleSlides = slides.slice(slides.length - 1).concat(slides.slice(0, 2));
+
   const [sliderSlides, setSliderSlides] = useState(initialVisibleSlides);
   const [direction, setDirection] = useState(DirectionsEnum.STILL);
   const [isSlideshowStopped, setIsSlideShowStopped] = useState(false);
   const [firstSlideIndex, setFirstSlideIndex] = useState(slides.length - 1);
 
-  useEffect(() => {
-    if (!auto || isSlideshowStopped) return;
-    const id = setInterval(() => handleTransitionAttempt(DirectionsEnum.RIGHT), delay * 1000);
-    return () => clearInterval(id);
-  }, [isSlideshowStopped, auto, delay, direction, loop]);
-
   const handleSlideChange = useCallback(
-    (initialIndex: number, newIndex: number) => {
+    (initialIndex: number, newIndex: number) => () => {
       let cropIndex = initialIndex;
       const newSlides = sliderSlides.map(() => {
         if (cropIndex >= slides.length) {
@@ -100,28 +57,55 @@ const Slider = observer(({ slides }: { slides: ISlide[] }) => {
     [sliderSlides, slides]
   );
 
-  const handleTransitionEnd = useCallback(() => {
-    if (direction === 'left') {
-      const initialIndex = firstSlideIndex - 1;
-      const finalIndex = firstSlideIndex - 1 < 0 ? slides.length - 1 : firstSlideIndex - 1;
-      handleSlideChange(initialIndex, finalIndex);
-    } else {
-      const initialIndex = firstSlideIndex + 1;
-      const finalIndex = firstSlideIndex + 1 >= slides.length ? 0 : firstSlideIndex + 1;
-      handleSlideChange(initialIndex, finalIndex);
-    }
-  }, [direction, firstSlideIndex, handleSlideChange, slides.length]);
+  const handleTransitionEnd = useCallback(
+    () => () => {
+      if (direction === 'left') {
+        const initialIndex = firstSlideIndex - 1;
+        const finalIndex = firstSlideIndex - 1 < 0 ? slides.length - 1 : firstSlideIndex - 1;
+        handleSlideChange(initialIndex, finalIndex)();
+      } else {
+        const initialIndex = firstSlideIndex + 1;
+        const finalIndex = firstSlideIndex + 1 >= slides.length ? 0 : firstSlideIndex + 1;
+        handleSlideChange(initialIndex, finalIndex)();
+      }
+    },
+    [direction, firstSlideIndex, handleSlideChange, slides.length]
+  );
 
   const handlePagination = useCallback(
-    (e: React.MouseEvent) => {
-      const index = +(e.target as HTMLButtonElement).value;
-      handleSlideChange(index, index);
+    (num: number) => () => {
+      const index = num;
+      handleSlideChange(index, index)();
     },
     [handleSlideChange]
   );
 
+  const translateIntoSlideIndex = memoizeWith(
+    (index: number) => index.toString(),
+    (index: number) => (index === 0 ? slides.length - 1 : index - 1)
+  );
+
+  const paginationButtons = useMemo(
+    () =>
+      slides.map((elem, index) => (
+        <Button
+          onClick={handlePagination(translateIntoSlideIndex(index))}
+          mode={
+            translateIntoSlideIndex(index) === firstSlideIndex
+              ? ButtonModeEnum.PRIMARY
+              : ButtonModeEnum.SECONDARY
+          }
+          size={ButtonSizeEnum.SMALL}
+          key={elem.img}
+        >
+          {index + 1}
+        </Button>
+      )),
+    [slides, firstSlideIndex, translateIntoSlideIndex]
+  );
+
   const handleTransitionAttempt = useCallback(
-    (direction: DirectionsEnum) => {
+    (direction: DirectionsEnum) => () => {
       if (!loop) {
         if (direction === 'left' && firstSlideIndex === slides.length - 1) {
           return;
@@ -134,35 +118,28 @@ const Slider = observer(({ slides }: { slides: ISlide[] }) => {
     [loop, firstSlideIndex, slides.length]
   );
 
+  useEffect(() => {
+    if (!auto || isSlideshowStopped) return;
+    const id = setInterval(() => handleTransitionAttempt(DirectionsEnum.RIGHT)(), delay * 1000);
+    return () => clearInterval(id);
+  }, [isSlideshowStopped, auto, delay, direction, loop, handleTransitionAttempt]);
+
   const slidesArr = useMemo(
     () =>
       sliderSlides.map((elem) => (
         <Slide key={elem.img}>
-          <StyledCaption>{elem.text}</StyledCaption>
+          <StyledCaption as="figcaption" mode={TextModeEnum.SLIDEINFO} color={colors.WHITE}>
+            {elem.text}
+          </StyledCaption>
           <StyledImage src={elem.img} alt="pic" />
         </Slide>
       )),
     [sliderSlides]
   );
 
-  const paginationButtons = useMemo(
-    () =>
-      slides.map((elem, index) => (
-        <PaginationButton
-          onClick={handlePagination}
-          value={index === 0 ? slides.length - 1 : index - 1}
-          key={elem.img}
-          currentSlide={firstSlideIndex}
-        >
-          {index + 1}
-        </PaginationButton>
-      )),
-    [slides, firstSlideIndex, handlePagination]
-  );
-
   return (
     <div>
-      <StyledView onTransitionEnd={handleTransitionEnd}>
+      <StyledView onTransitionEnd={handleTransitionEnd()}>
         <PageCounter currentPage={firstSlideIndex + 2} pagesTotal={slides.length}></PageCounter>
         <SliderBox
           direction={direction}
@@ -180,39 +157,41 @@ const Slider = observer(({ slides }: { slides: ISlide[] }) => {
           {slidesArr}
         </SliderBox>
         {navs && (
-          <>
-            <NavigationButton
-              mode="left"
-              onClick={() => handleTransitionAttempt(DirectionsEnum.LEFT)}
-            />
-            <NavigationButton
-              mode="right"
-              onClick={() => handleTransitionAttempt(DirectionsEnum.RIGHT)}
-            />
-          </>
+          <StyledNavContainer>
+            <Button
+              mode={ButtonModeEnum.TRANSPARENT}
+              size={ButtonSizeEnum.LARGE}
+              onClick={handleTransitionAttempt(DirectionsEnum.LEFT)}
+            >
+              <Icon src={arrowBtn} mode={IconEnum.REVERSE} alt="Arrow button" />
+            </Button>
+            <Button
+              mode={ButtonModeEnum.TRANSPARENT}
+              size={ButtonSizeEnum.LARGE}
+              onClick={handleTransitionAttempt(DirectionsEnum.RIGHT)}
+            >
+              <Icon src={arrowBtn} mode={IconEnum.NORMAL} alt="Arrow button" />
+            </Button>
+          </StyledNavContainer>
         )}
       </StyledView>
-      {pages && <StyledPagsContainer>{paginationButtons}</StyledPagsContainer>}
+      {pages && <StyledPagesContainer>{paginationButtons}</StyledPagesContainer>}
     </div>
   );
-});
+}
 
-export default React.memo(Slider);
+export default React.memo(observer(Slider));
+
+const StyledCaption = styled(Typography)`
+  position: absolute;
+  width: 250px;
+  bottom: 0;
+  left: calc((100% - 250px) / 2);
+`;
 
 const StyledImage = styled.img`
   width: 100%;
   height: 100%;
-`;
-
-const StyledCaption = styled.figcaption`
-  position: absolute;
-  width: 250px;
-  font-size: 40px;
-  font-family: 'Roboto Slab', serif;
-  text-shadow: 2px 2px 2px black;
-  bottom: 0;
-  left: calc((100% - 250px) / 2);
-  color: white;
 `;
 
 const StyledView = styled.div`
@@ -221,7 +200,7 @@ const StyledView = styled.div`
   position: relative;
 `;
 
-const StyledPagsContainer = styled.div`
+const StyledPagesContainer = styled.div`
   width: 100%;
   display: flex;
   justify-content: center;
@@ -248,4 +227,12 @@ const Slide = styled.figure`
   position: relative;
   width: 100%;
   margin: 0;
+`;
+
+const StyledNavContainer = styled.div`
+  position: absolute;
+  top: 50%;
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
 `;

@@ -1,8 +1,9 @@
 import React from 'react';
 import { createGlobalStyle } from 'styled-components';
-import slides from './data/slides.json';
-import { Settings } from './components/Settings';
+
 import Slider from './components/Slider';
+import slides from './data/slides.json';
+import Settings from './components/Settings';
 
 function App() {
   return (

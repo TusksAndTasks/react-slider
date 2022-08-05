@@ -1,45 +1,46 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { observer } from 'mobx-react-lite';
 import styled from 'styled-components';
+
 import TextInput from '../primitives/TextInput';
 import Checkbox from '../primitives/Checkbox';
+import Typography from '../primitives/Typography';
 import settingsStore from '../store/settingsStore';
-import { SettingsEnum } from './Slider';
+import { colors } from '../Theme/colors';
+import { TextModeEnum } from '../primitives/Typography';
+import { SettingsEnum, TextInputEnum } from '../store/settingsStore';
 
-const Settings = observer(() => {
-  const checkboxes = useMemo(
-    () =>
-      Object.values(SettingsEnum).map((value) => (
-        <Checkbox
-          checked={settingsStore[value]}
-          key={value}
-          onChange={() => settingsStore.toggleProp(value)}
-        >
-          {value}
-        </Checkbox>
-      )),
-    [Object.values(SettingsEnum).map((value) => settingsStore[value])]
-  );
-
+function Settings() {
   return (
     <>
-      <StyledHeading>Tools</StyledHeading>
+      <StyledHeading as="h2" mode={TextModeEnum.HEADING} color={colors.BLUE}>
+        Tools
+      </StyledHeading>
       <SettingsBox>
-        {checkboxes}
-        <TextInput
-          value={settingsStore.delay}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            settingsStore.changeDelay(+e.target.value)
-          }
-        >
-          Delay
-        </TextInput>
+        {Object.values(SettingsEnum).map((value) => (
+          <Checkbox
+            checked={settingsStore[value]}
+            key={value}
+            onChange={settingsStore.toggleCheckboxes(value)}
+          >
+            {value}
+          </Checkbox>
+        ))}
+        {Object.values(TextInputEnum).map((value) => (
+          <TextInput
+            value={settingsStore[value]}
+            key={value}
+            onChange={settingsStore.changeTextInput(value)}
+          >
+            {value}
+          </TextInput>
+        ))}
       </SettingsBox>
     </>
   );
-});
+}
 
-export { Settings };
+export default React.memo(observer(Settings));
 
 const SettingsBox = styled.div`
   display: flex;
@@ -47,7 +48,7 @@ const SettingsBox = styled.div`
   align-items: center;
 `;
 
-const StyledHeading = styled.h2`
+const StyledHeading = styled(Typography)`
   text-align: center;
   margin-bottom: 30px;
 `;

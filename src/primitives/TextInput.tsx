@@ -1,7 +1,13 @@
+import React from 'react';
 import styled from 'styled-components';
-import { ITextInputProps } from '../components/Slider';
 
-export default function TextInput({ value, onChange, children }: ITextInputProps) {
+interface ITextInputProps {
+  children?: React.ReactNode;
+  value: string | number;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+function TextInput({ value, onChange, children }: ITextInputProps) {
   return (
     <StyledLabel>
       {children}
@@ -9,6 +15,8 @@ export default function TextInput({ value, onChange, children }: ITextInputProps
     </StyledLabel>
   );
 }
+
+export default React.memo(TextInput);
 
 const StyledLabel = styled.label`
   display: flex;

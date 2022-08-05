@@ -1,7 +1,13 @@
+import React from 'react';
 import styled from 'styled-components';
-import { ICheckBoxProps } from '../components/Slider';
 
-export default function Checkbox({ checked, onChange, children }: ICheckBoxProps) {
+export interface ICheckBoxProps {
+  children?: React.ReactNode;
+  checked: boolean;
+  onChange: () => void;
+}
+
+function Checkbox({ checked, onChange, children }: ICheckBoxProps) {
   return (
     <StyledLabel>
       {children}
@@ -9,6 +15,8 @@ export default function Checkbox({ checked, onChange, children }: ICheckBoxProps
     </StyledLabel>
   );
 }
+
+export default React.memo(Checkbox);
 
 const StyledLabel = styled.label`
   display: flex;
