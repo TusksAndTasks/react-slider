@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import { colors } from '../Theme/colors';
 
+// FIXME привести перечисления в общий вид
 export enum ButtonSizeEnum {
   SMALL = 'small',
   LARGE = 'large',
@@ -14,9 +15,10 @@ export enum ButtonModeEnum {
   TRANSPARENT = 'transparent',
 }
 
+// FIXME лишний интерфейс
 interface IButtonStylesProps {
-  size: ButtonSizeEnum;
-  mode: ButtonModeEnum;
+  size: ButtonSizeEnum; // FIXME необязательное, по-умолчанию SMALL
+  mode: ButtonModeEnum; // FIXME необязательное, по-умолчанию PRIMARY
 }
 
 interface IButtonProps extends IButtonStylesProps {
@@ -26,6 +28,7 @@ interface IButtonProps extends IButtonStylesProps {
 
 function Button({ children, size, mode, onClick }: IButtonProps) {
   return (
+    // FIXME функции в конце
     <StyledButton onClick={onClick} size={size} mode={mode}>
       {children}
     </StyledButton>
@@ -44,11 +47,17 @@ const StyledButton = styled.button<IButtonStylesProps>`
   }
 `;
 
+/* FIXME const buttonStylesMap: Record<ButtonSizeEnum, React.CSSProperties>.
+    Типизируем все что можно затипизировать, даже если ts не ругается.
+    Иначе если завтра добавятся еще какие-то модификаторы для кнопки, то объект со стилями превратится в кашу.
+    Уже сейчас он отражает стили по размеру и модификаторам, что противоречит принципу единственно ответственности
+*/
 const buttonStylesMap = {
   [ButtonSizeEnum.SMALL]: {
     padding: '3px 7px',
   },
   [ButtonSizeEnum.LARGE]: {
+    // FIXME странно что для LARGE размеры не через отступы, а через height и width, придерживайся однообразия
     width: '50px',
     height: '50px',
   },

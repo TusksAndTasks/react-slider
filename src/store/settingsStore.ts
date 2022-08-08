@@ -2,6 +2,7 @@ import React from 'react';
 import { action, makeObservable, observable } from 'mobx';
 import { identity, memoizeWith } from 'ramda';
 
+// FIXME лишний enum, в нем нет необходимости
 export enum SettingsEnum {
   LOOP = 'loop',
   NAVS = 'navs',
@@ -24,6 +25,7 @@ const inputsWithChangers = new Map()
   .set(TextInputEnum.DELAY, TextInputChangerEnum.CHANGEDELAY)
   .set(TextInputEnum.NOTE, TextInputChangerEnum.CHANGENOTE);
 
+// FIXME имплементируй от ISliderSettings и ISliderSettingsStore
 class settingsStore {
   loop = true;
   navs = true;
@@ -33,6 +35,7 @@ class settingsStore {
   delay = 3;
   note = '';
 
+  // FIXME конструктор всегда идет первым в теле класса
   constructor() {
     makeObservable(this, {
       loop: observable,
@@ -47,6 +50,7 @@ class settingsStore {
     });
   }
 
+  // FIXME методы ниже нарушают второй принцип solid
   toggleCheckboxes = memoizeWith(identity, (str: SettingsEnum) =>
     action(() => {
       this[str] = !this[str];

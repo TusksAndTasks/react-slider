@@ -3,6 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { memoizeWith } from 'ramda';
 import styled from 'styled-components';
 
+// FIXME привести в порядок импорты
 import Typography from '../primitives/Typography';
 import Button from '../primitives/Button';
 import Icon from '../primitives/Icon';
@@ -19,17 +20,20 @@ export interface ICounterProps {
   pagesTotal: number;
 }
 
+// FIXME стандартизировать
 export enum DirectionsEnum {
   LEFT = 'left',
   RIGHT = 'right',
   STILL = 'still',
 }
 
+// FIXME интерфейс не импортируется, экспорт не нужен
 export interface ISlide {
   img: string;
   text: string;
 }
 
+// FIXME провести рефакторинг, вынести логику в хуки, атомарные элементы верстки в дочерние компоненты. Slider должен быть директорией
 function Slider({ slides }: { slides: ISlide[] }) {
   const { loop, navs, pages, auto, stopMouseHover, delay } = settingsStore;
   const initialVisibleSlides = slides.slice(slides.length - 1).concat(slides.slice(0, 2));

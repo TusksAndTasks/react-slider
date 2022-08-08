@@ -4,11 +4,11 @@ import styled from 'styled-components';
 
 import TextInput from '../primitives/TextInput';
 import Checkbox from '../primitives/Checkbox';
-import Typography from '../primitives/Typography';
+import Typography from '../primitives/Typography'; // FIXME отступ
 import settingsStore from '../store/settingsStore';
 import { colors } from '../Theme/colors';
-import { TextModeEnum } from '../primitives/Typography';
-import { SettingsEnum, TextInputEnum } from '../store/settingsStore';
+import { TextModeEnum } from '../primitives/Typography'; // FIXME выше под примитивы
+import { SettingsEnum, TextInputEnum } from '../store/settingsStore'; // FIXME уже есть импорт из ../store/settingsStore'
 
 function Settings() {
   return (

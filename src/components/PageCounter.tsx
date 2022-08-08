@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import Typography from '../primitives/Typography';
 import { TextModeEnum } from '../primitives/Typography';
-import { ICounterProps } from './Slider';
+import { ICounterProps } from './Slider'; // FIXME компоненты не должны зависеть друг от друга, в данном случае PageCounter это часть компонента Slider
 import { colors } from '../Theme/colors';
 
 function PageCounter({ currentPage, pagesTotal }: ICounterProps) {
