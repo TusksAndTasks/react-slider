@@ -4,14 +4,18 @@ import styled from 'styled-components';
 export interface ICheckBoxProps {
   children?: React.ReactNode;
   checked: boolean;
-  onChange: () => void;
+  onChange: (value?: boolean) => void;
 }
+
+const getEventValue =
+  (callback: (value?: boolean) => void) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    callback(e.target.checked);
 
 function Checkbox({ checked, onChange, children }: ICheckBoxProps) {
   return (
     <StyledLabel>
       {children}
-      <input type="checkbox" checked={checked} onChange={onChange} />
+      <input type="checkbox" checked={checked} onChange={getEventValue(onChange)} />
     </StyledLabel>
   );
 }

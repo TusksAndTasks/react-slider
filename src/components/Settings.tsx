@@ -2,39 +2,39 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import styled from 'styled-components';
 
-import TextInput from '../primitives/TextInput';
-import Checkbox from '../primitives/Checkbox';
-import Typography from '../primitives/Typography'; // FIXME отступ
-import settingsStore from '../store/settingsStore';
-import { colors } from '../Theme/colors';
-import { TextModeEnum } from '../primitives/Typography'; // FIXME выше под примитивы
-import { SettingsEnum, TextInputEnum } from '../store/settingsStore'; // FIXME уже есть импорт из ../store/settingsStore'
+import Checkbox from 'primitives/Checkbox';
+import Typography, { TypographyMode } from 'primitives/Typography';
+import NumericalRange from 'primitives/NumericalRange';
+
+import sliderSettingsModel from 'store/SliderSettingsModel';
+import { colors } from 'Theme/colors';
 
 function Settings() {
   return (
     <>
-      <StyledHeading as="h2" mode={TextModeEnum.HEADING} color={colors.BLUE}>
+      <StyledHeading as="h2" mode={TypographyMode.HEADING} color={colors.BLUE}>
         Tools
       </StyledHeading>
       <SettingsBox>
-        {Object.values(SettingsEnum).map((value) => (
-          <Checkbox
-            checked={settingsStore[value]}
-            key={value}
-            onChange={settingsStore.toggleCheckboxes(value)}
-          >
-            {value}
-          </Checkbox>
-        ))}
-        {Object.values(TextInputEnum).map((value) => (
-          <TextInput
-            value={settingsStore[value]}
-            key={value}
-            onChange={settingsStore.changeTextInput(value)}
-          >
-            {value}
-          </TextInput>
-        ))}
+        {Object.entries(sliderSettingsModel).map(([key, value]) => {
+          return typeof value === 'boolean' ? (
+            <Checkbox
+              checked={value}
+              key={key}
+              onChange={sliderSettingsModel.setFieldValueFabric(key as any)}
+            >
+              {key}
+            </Checkbox>
+          ) : (
+            <NumericalRange
+              value={value}
+              key={key}
+              onChange={sliderSettingsModel.setFieldValueFabric(key as any)}
+            >
+              {key}
+            </NumericalRange>
+          );
+        })}
       </SettingsBox>
     </>
   );

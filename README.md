@@ -1,1 +1,1 @@
-Slider created with React
+Index created with React

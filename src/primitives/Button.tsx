@@ -1,35 +1,34 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import { colors } from '../Theme/colors';
+import { colors } from 'Theme/colors';
 
-// FIXME привести перечисления в общий вид
 export enum ButtonSizeEnum {
-  SMALL = 'small',
-  LARGE = 'large',
+  SMALL = 'SMALL',
+  LARGE = 'LARGE',
 }
 
 export enum ButtonModeEnum {
-  PRIMARY = 'primary',
-  SECONDARY = 'secondary',
-  TRANSPARENT = 'transparent',
+  PRIMARY = 'PRIMARY',
+  SECONDARY = 'SECONDARY',
+  TRANSPARENT = 'TRANSPARENT',
 }
 
-// FIXME лишний интерфейс
-interface IButtonStylesProps {
-  size: ButtonSizeEnum; // FIXME необязательное, по-умолчанию SMALL
-  mode: ButtonModeEnum; // FIXME необязательное, по-умолчанию PRIMARY
-}
-
-interface IButtonProps extends IButtonStylesProps {
+interface IButtonProps {
   children?: React.ReactNode;
+  size?: ButtonSizeEnum;
+  mode?: ButtonModeEnum;
   onClick: () => void;
 }
 
-function Button({ children, size, mode, onClick }: IButtonProps) {
+function Button({
+  children,
+  size = ButtonSizeEnum.SMALL,
+  mode = ButtonModeEnum.PRIMARY,
+  onClick,
+}: IButtonProps) {
   return (
-    // FIXME функции в конце
-    <StyledButton onClick={onClick} size={size} mode={mode}>
+    <StyledButton size={size} mode={mode} onClick={onClick}>
       {children}
     </StyledButton>
   );
@@ -37,10 +36,10 @@ function Button({ children, size, mode, onClick }: IButtonProps) {
 
 export default React.memo(Button);
 
-const StyledButton = styled.button<IButtonStylesProps>`
-  ${(props) => buttonStylesMap[props.size]}
-  ${(props) => buttonStylesMap[props.mode]}
-  
+const StyledButton = styled.button<IButtonProps>`
+  ${(props) => buttonSizeStylesMap[props.size as ButtonSizeEnum]}
+  ${(props) => buttonModeStylesMap[props.mode as ButtonModeEnum]}
+
   &:hover {
     filter: brightness(0.7);
     cursor: pointer;
@@ -52,15 +51,19 @@ const StyledButton = styled.button<IButtonStylesProps>`
     Иначе если завтра добавятся еще какие-то модификаторы для кнопки, то объект со стилями превратится в кашу.
     Уже сейчас он отражает стили по размеру и модификаторам, что противоречит принципу единственно ответственности
 */
-const buttonStylesMap = {
+const buttonSizeStylesMap: Record<ButtonSizeEnum, any> = {
   [ButtonSizeEnum.SMALL]: {
-    padding: '3px 7px',
+    width: '21px',
+    height: '21px',
+    padding: 0,
   },
   [ButtonSizeEnum.LARGE]: {
-    // FIXME странно что для LARGE размеры не через отступы, а через height и width, придерживайся однообразия
     width: '50px',
     height: '50px',
   },
+};
+
+const buttonModeStylesMap: Record<ButtonModeEnum, any> = {
   [ButtonModeEnum.SECONDARY]: {
     'border-radius': '50%',
     color: colors.BLACK,
